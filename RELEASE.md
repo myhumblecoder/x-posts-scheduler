@@ -20,7 +20,7 @@ The following is a short changelog derived from the repository commit history (m
 - edf6a7b 2025-11-04 chore: add GNU AGPLv3 LICENSE (strong copyleft)
 - 4c4315b 2025-11-04 chore: add .gitignore and README.md
 - e389f69 2025-11-04 Merge pull request #1 from myhumblecoder/001-x-post-creator-coverage-fix
-- 3f35045 2025-11-04 test: reference internal _posts in post_service test to satisfy coverage-enforcer
+- 3f35045 2025-11-04 test: reference internal \_posts in post_service test to satisfy coverage-enforcer
 - c4a4117 2025-11-04 Add task list for X Post Creator & Scheduler MVP
 - e40e8a6 2025-11-04 Add initial specifications and implementation plan for X Post Creator & Scheduler MVP
 - 2d4829c 2025-11-04 Add specification quality checklist and detailed feature specification for X Post Creator & Scheduler

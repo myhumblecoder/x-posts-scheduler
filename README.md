@@ -25,9 +25,8 @@ node backend/check-coverage.js
 
 ## Where to look
 
+## Diagrams
 
-Diagrams
---------
 For onboarding and design context the repository includes Mermaid diagrams (renderable on GitHub):
 
 - `docs/diagrams/architecture.mmd` — high-level architecture (Frontend, API, Worker, DB, Storage, LLM, X API)
@@ -53,28 +52,23 @@ Specify your license here (e.g., MIT) or add a `LICENSE` file.
 
 ## One-click deploy & live demo
 
-Badges
--------
+## Badges
 
 - Vercel: [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new)
 - GitHub Actions: ![CI](https://github.com/myhumblecoder/x-posts-scheduler/workflows/CI/badge.svg)
 
-Live demo
----------
+## Live demo
 
 The live demo URL: **TBD** — update `RELEASE.md` and this README with the public demo URL after deployment.
 
-Screenshots
------------
+## Screenshots
 
 Add screenshots of the primary flows (compose, schedule, arrange) under `docs/screenshots/` and reference them here. Example placeholders:
 
 ![Compose screen](docs/screenshots/compose.png)
 ![Arrange tiles keyboard reorder](docs/screenshots/arrange-keyboard.png)
 
-Deploy notes
-------------
+## Deploy notes
 
 - Frontend: deploy to Vercel for quick static hosting and previews (see `deploy/frontend/vercel.json`).
 - Backend: containerize with the provided `deploy/backend/Dockerfile` and supply secrets via `deploy/.env.example`.
-
