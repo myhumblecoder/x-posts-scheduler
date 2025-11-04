@@ -1,0 +1,131 @@
+name: CI - Lint, Test, Coverage, Accessibility
+
+on:
+    push:
+        branches: [master]
+    pull_request:
+        branches: [master]
+
+jobs:
+    checks:
+        name: Lint & Tests & Coverage
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Detect project type
+              id: detect
+              run: |
+                  echo "has_node=false" >> $GITHUB_OUTPUT
+                  echo "has_python=false" >> $GITHUB_OUTPUT
+                  if [ -f package.json ]; then echo "has_node=true" >> $GITHUB_OUTPUT; fi
+                  if [ -f pyproject.toml ] || [ -f requirements.txt ]; then echo "has_python=true" >> $GITHUB_OUTPUT; fi
+
+            - name: Setup Node
+              if: steps.detect.outputs.has_node == 'true'
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "18"
+
+            - name: Node - Install & Lint
+              if: steps.detect.outputs.has_node == 'true'
+              run: |
+                  npm ci
+                  # Expect a lint script or eslint to be available. This step MUST pass per constitution.
+                  if npm run -s lint; then
+                    echo "Lint passed"
+                  else
+                    echo "Lint failed or no lint script defined. Add a 'lint' script or install eslint.";
+                    exit 1
+                  fi
+
+            - name: Node - Test & Coverage
+              if: steps.detect.outputs.has_node == 'true'
+              run: |
+                  # Expect a test script that produces coverage (common tools: jest --coverage)
+                  if npm test -- --coverage; then
+                    echo "Tests passed"
+                  else
+                    echo "Tests failed or coverage not produced. Ensure tests exist and report coverage.";
+                    exit 1
+                  fi
+
+            - name: Python - Setup
+              if: steps.detect.outputs.has_python == 'true'
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.11"
+
+            - name: Python - Install & Test
+              if: steps.detect.outputs.has_python == 'true'
+              run: |
+                  python -m pip install --upgrade pip
+                  if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+                  pip install pytest pytest-cov
+                  # Enforce coverage threshold for core logic as per constitution (project may need to
+                  # configure appropriate coverage scope); default is 100 for core logic.
+                  pytest --cov=./ --cov-report=xml --cov-fail-under=100 || {
+                    echo "Coverage gate failed. Core logic coverage must meet configured threshold."; exit 1; }
+
+            - name: Upload coverage artifact
+              if: steps.detect.outputs.has_node == 'true' || steps.detect.outputs.has_python == 'true'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-report
+                  path: |
+                      coverage.xml
+                      coverage/lcov.info
+                      coverage
+
+    accessibility:
+        name: Accessibility Checks (scaffold)
+        runs-on: ubuntu-latest
+        needs: checks
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Detect frontend
+              id: detect_frontend
+              run: |
+                  echo "has_frontend=false" >> $GITHUB_OUTPUT
+                  if [ -d frontend ] || [ -f package.json ]; then echo "has_frontend=true" >> $GITHUB_OUTPUT; fi
+
+            - name: Accessibility - pa11y scaffold
+              if: steps.detect_frontend.outputs.has_frontend == 'true'
+              run: |
+                  # This step expects the repository to provide an accessibility check script or
+                  # a pa11y/lighthouse configuration. The job will try to run npm-based checks.
+                  if [ -f package.json ]; then
+                    npm ci
+                    if npm run -s accessibility; then
+                      echo "Accessibility checks passed"
+                    else
+                      echo "Accessibility checks failed or no 'accessibility' script defined. Add one or configure pa11y/lighthouse.";
+                      exit 1
+                    fi
+                  else
+                    echo "No package.json found; skipping automated accessibility checks. Add frontend and an accessibility script to enable this job.";
+                    exit 0
+                  fi
+
+    audit-report:
+        name: Audit & Report
+        runs-on: ubuntu-latest
+        needs: [checks, accessibility]
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Save summary
+              run: |
+                  echo "Constitution gates summary:" > ci-constitution-summary.txt
+                  echo "- Lint & Tests & Coverage: completed" >> ci-constitution-summary.txt
+                  echo "- Accessibility: completed (or skipped if not configured)" >> ci-constitution-summary.txt
+
+            - name: Upload summary
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ci-constitution-summary
+                  path: ci-constitution-summary.txt

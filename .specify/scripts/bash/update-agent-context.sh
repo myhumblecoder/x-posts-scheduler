@@ -30,9 +30,10 @@
 #
 # 5. Multi-Agent Support
 #    - Handles agent-specific file paths and naming conventions
-#    - Supports: Claude, Gemini, Copilot, Cursor, Qwen, opencode, Codex, Windsurf, Kilo Code, Auggie CLI, Roo Code, CodeBuddy CLI, Amp, or Amazon Q Developer CLI
+#    - Supports multiple agents; this project prefers GitHub Copilot in VS Code as the
+#      primary agent integration. When no agent files exist, the script will create a
+#    default Copilot instructions file (`.github/copilot-instructions.md`).
 #    - Can update single agents or all existing agent files
-#    - Creates default Claude file if no agent files exist
 #
 # Usage: ./update-agent-context.sh [agent_type]
 # Agent types: claude|gemini|copilot|cursor-agent|qwen|opencode|codex|windsurf|kilocode|auggie|q
@@ -693,10 +694,10 @@ update_all_existing_agents() {
         found_agent=true
     fi
     
-    # If no agent files exist, create a default Claude file
+    # If no agent files exist, create a default Copilot instructions file
     if [[ "$found_agent" == false ]]; then
-        log_info "No existing agent files found, creating default Claude file..."
-        update_agent_file "$CLAUDE_FILE" "Claude Code"
+        log_info "No existing agent files found, creating default GitHub Copilot instructions file..."
+        update_agent_file "$COPILOT_FILE" "GitHub Copilot"
     fi
 }
 print_summary() {
@@ -717,7 +718,7 @@ print_summary() {
     
     echo
 
-    log_info "Usage: $0 [claude|gemini|copilot|cursor-agent|qwen|opencode|codex|windsurf|kilocode|auggie|codebuddy|q]"
+    log_info "Usage: $0 [gemini|copilot|cursor-agent|qwen|opencode|codex|windsurf|kilocode|auggie|codebuddy|q]"
 }
 
 #==============================================================================
