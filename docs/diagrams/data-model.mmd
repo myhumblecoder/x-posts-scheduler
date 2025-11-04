@@ -1,0 +1,33 @@
+```mermaid
+erDiagram
+    USER {
+      string id PK
+      string x_account_id
+      datetime created_at
+    }
+    POST {
+      string id PK
+      string user_id FK
+      text content_text
+      string status
+      datetime scheduled_at
+      datetime sent_at
+      string remote_post_id
+      string idempotency_key
+    }
+    MEDIA {
+      string id PK
+      string post_id FK
+      string type
+      string storage_ref
+      string alt_text
+    }
+
+    USER ||--o{ POST : "creates"
+    POST ||--o{ MEDIA : "has"
+
+    %% Notes
+    %% - Index on (user_id, status, scheduled_at) recommended for worker pickup
+```
+
+Entity-relationship diagram for onboarding and schema understanding.

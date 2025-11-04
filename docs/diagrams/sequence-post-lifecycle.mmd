@@ -1,0 +1,29 @@
+```mermaid
+sequenceDiagram
+  participant User
+  participant Frontend
+  participant API
+  participant DB
+  participant Worker
+  participant XAPI
+
+  User->>Frontend: create post (draft)
+  Frontend->>API: POST /posts (save draft)
+  API->>DB: insert POST (status=DRAFT)
+  User->>Frontend: schedule post
+  Frontend->>API: PATCH /posts/:id (scheduled_at)
+  API->>DB: update POST (status=SCHEDULED, scheduled_at)
+  Worker->>DB: pick scheduled posts (due)
+  Worker->>API: fetch post details (or read DB)
+  Worker->>XAPI: POST /create (with idempotency-key)
+  XAPI-->>Worker: 200/201 (remote_post_id)
+  Worker->>DB: update POST (status=SENT, sent_at, remote_post_id)
+  alt XAPI failed
+    Worker->>DB: update POST (status=FAILED, error)
+    Worker->>RetrySvc: schedule retry
+  end
+
+  Note right of Worker: Idempotency keys prevent duplicates
+```
+
+Sequence diagram showing the lifecycle from draft → schedule → worker → post → success/failure.
