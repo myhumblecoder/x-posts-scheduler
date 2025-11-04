@@ -1,0 +1,176 @@
+openapi: 3.0.1
+info:
+  title: X Post Creator & Scheduler API (spec)
+  version: '1.0.0'
+  description: REST contract for the X Post Creator & Scheduler MVP (tech-agnostic)
+servers:
+  - url: https://api.example.com
+paths:
+  /v1/posts/generate:
+    post:
+      summary: Generate post text via LLM
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                template_id:
+                  type: string
+              required: []
+      responses:
+        '200':
+          description: Generated draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostDraft'
+        '4XX':
+          description: Client error or LLM error
+  /v1/posts:
+    post:
+      summary: Create or save a draft post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCreate'
+      responses:
+        '201':
+          description: Draft created
+  /v1/posts/{id}:
+    get:
+      summary: Retrieve a post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+    patch:
+      summary: Update a post (edit content, attach media, schedule)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostUpdate'
+      responses:
+        '200':
+          description: Updated
+  /v1/posts/{id}/schedule:
+    post:
+      summary: Schedule a post for exact time
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scheduled_at:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Scheduled
+  /v1/posts/{id}/retry:
+    post:
+      summary: Manual retry for a failed post (user-initiated)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Retry enqueued
+  /v1/posts/history:
+    get:
+      summary: List user's posts with filters
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of posts
+components:
+  schemas:
+    PostDraft:
+      type: object
+      properties:
+        temp_id:
+          type: string
+        content_text:
+          type: string
+        preview_html:
+          type: string
+    PostCreate:
+      type: object
+      properties:
+        content_text:
+          type: string
+        media_ids:
+          type: array
+          items:
+            type: string
+    PostUpdate:
+      type: object
+      properties:
+        content_text:
+          type: string
+        media_ids:
+          type: array
+          items:
+            type: string
+        scheduled_at:
+          type: string
+          format: date-time
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        content_text:
+          type: string
+        status:
+          type: string
+        scheduled_at:
+          type: string
+          format: date-time
+        sent_at:
+          type: string
+          format: date-time
+        remote_post_id:
+          type: string
