@@ -16,8 +16,14 @@ Rate-limit handling
 - On 429 responses, use the Retry-After header and backoff strategy.
 - Track per-user and global rate usage counters to avoid bursts; apply short delays if limits approach thresholds.
 
+
 Consequences
 ------------
 - Secure and standard authorization for user actions.
 - Operational complexity: token rotation, encrypted token storage, and retry coordination needed.
 - Ensures compliance with X API policies and reduces chance of throttling.
+
+Related diagrams
+----------------
+- `../diagrams/architecture.mmd` (where OAuth tokens are stored and used)
+- `../diagrams/sequence-post-lifecycle.mmd` (posting step includes OAuth usage)

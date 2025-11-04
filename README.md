@@ -25,10 +25,17 @@ node backend/check-coverage.js
 
 ## Where to look
 
-- Core implementation (minimal, TDD-first): `backend/src/`
-- Tests: `backend/tests/`
-- Specs & plan for the feature: `specs/001-x-post-creator/`
-- Project constitution: `.specify/memory/constitution.md`
+
+Diagrams
+--------
+For onboarding and design context the repository includes Mermaid diagrams (renderable on GitHub):
+
+- `docs/diagrams/architecture.mmd` — high-level architecture (Frontend, API, Worker, DB, Storage, LLM, X API)
+- `docs/diagrams/data-model.mmd` — ERD for User, Post, Media and relations
+- `docs/diagrams/sequence-post-lifecycle.mmd` — sequence diagram for post lifecycle (draft → schedule → worker → post)
+- `docs/diagrams/sequence-retry.mmd` — retry flow, backoff and idempotency handling
+
+View these files in the `docs/diagrams/` folder for quick onboarding visuals.
 
 ## Branching and PRs
 

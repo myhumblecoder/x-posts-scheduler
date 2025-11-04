@@ -20,7 +20,14 @@ Accessibility specifics
   - `ArrowLeft`/`ArrowUp` and `ArrowRight`/`ArrowDown` to move the tile while in interaction mode.
 - Provide live region announcements (`aria-live`) to describe moves for screen reader users.
 
+
 Consequences
 ------------
 - Improves accessibility and meets WCAG 2.1 AA for interactive drag-and-drop.
 - Adds implementation and testing overhead (keyboard E2E tests via Playwright + axe-core).
+
+Related diagrams
+----------------
+- `../diagrams/architecture.mmd` (where arrange fits in the app)
+- `../diagrams/sequence-post-lifecycle.mmd` (user flows interacting with tiles)
+- `../diagrams/data-model.mmd` (tiles/posts relation)
