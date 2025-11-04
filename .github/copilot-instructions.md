@@ -87,3 +87,6 @@ v2 compliance.
 ---
 
 Last updated: 2025-11-04
+
+## Recent Changes
+- 001-x-post-creator: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
