@@ -15,7 +15,13 @@ Expose a read-only `history_service` in the backend which provides queries:
 
 For MVP the service will be an in-memory view backed by the `posts` table. Future work will implement efficient indexes and paged queries in SQLite.
 
+
 Consequences
 ------------
 - Fast to implement for MVP, keeps UI responsive in single-user mode.
 - Must be migrated to database-backed queries before multi-user scaling.
+
+Related diagrams
+----------------
+- `../diagrams/data-model.mmd` (Post & indexing for history queries)
+- `../diagrams/sequence-post-lifecycle.mmd` (post lifecycle and history updates)

@@ -1,0 +1,27 @@
+```mermaid
+sequenceDiagram
+  participant Worker
+  participant RetrySvc
+  participant DB
+  participant XAPI
+
+  Worker->>DB: pick failed posts with next_scheduled_at <= now
+  loop for each failed post
+    Worker->>RetrySvc: request attempt(postId)
+    RetrySvc->>DB: get attempt metadata (attempts, idempotency_key)
+    RetrySvc->>XAPI: POST /create (with idempotency_key)
+    alt success
+      XAPI-->>RetrySvc: 200/201
+      RetrySvc->>DB: mark SENT, store remote_post_id
+    else transient failure (e.g., 429)
+      XAPI-->>RetrySvc: 429 Retry-After
+      RetrySvc->>DB: increment attempt, set next_scheduled_at (backoff)
+    else permanent failure
+      RetrySvc->>DB: mark FAILED (do not reschedule automatically)
+    end
+  end
+
+  Note over RetrySvc: Default backoff: 1m, 5m, 15m (configurable by ops)
+```
+
+Sequence diagram describing retry attempts, backoff, and idempotency handling.

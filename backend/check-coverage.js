@@ -8,6 +8,8 @@ const modulesToCheck = [
   path.join(__dirname, 'src', 'oauth.js'),
   path.join(__dirname, 'src', 'media_service.js'),
   path.join(__dirname, 'src', 'history_service.js'),
+  path.join(__dirname, 'src', 'tile_service.js'),
+  path.join(__dirname, 'src', 'retry_service.js'),
 ];
 
 const testsDir = path.join(__dirname, 'tests');

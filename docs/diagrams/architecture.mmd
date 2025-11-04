@@ -1,0 +1,31 @@
+```mermaid
+graph LR
+  Browser[Frontend (SPA)]
+  API[Backend API]
+  Worker[Posting Worker]
+  DB[SQLite (data/app.db)]
+  Storage[Media storage (local/file)]
+  LLM[LLM Adapter (local|cloud)]
+  XAPI[X API v2]
+
+  Browser -->|REST + OAuth PKCE| API
+  Browser -->|LLM requests| LLM
+  API --> DB
+  API --> Storage
+  API --> LLM
+  Worker --> DB
+  Worker --> Storage
+  Worker -->|POST (idempotency-key)| XAPI
+  API -->|enqueue| Worker
+  DB -->|stores| Storage
+
+  subgraph External
+    XAPI
+    LLM
+  end
+
+  classDef external fill:#ffe6e6,stroke:#ff6666;
+  class XAPI,LLM external
+```
+
+Architecture overview: shows the main runtime components and their interactions for onboarding.
