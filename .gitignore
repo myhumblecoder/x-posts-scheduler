@@ -1,0 +1,39 @@
+## Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+## Build output
+dist/
+build/
+coverage/
+lib/
+
+## Environment
+.env
+.env.local
+.env.*.local
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Editors
+.vscode/
+.idea/
+*.sublime-workspace
+
+## Misc
+.nyc_output/
+.cache/
+reports/
+
+## Logs
+logs/
+*.log
+npm-debug.log*
+
+## Spec files / local agent state
+.specify/cache/
