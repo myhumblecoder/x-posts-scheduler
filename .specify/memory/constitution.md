@@ -132,5 +132,4 @@ complexity.
   principles (TDD, coverage, linting, accessibility, API compliance). Audit results should be stored
   under `/docs/audits/`.
 
-**Version**: 1.0.0 | **Ratified**: 2025-11-04: original ratification date unknown - insert
-actual ratification date when available | **Last Amended**: 2025-11-04
+**Version**: 1.0.0 | **Ratified**: 2025-11-04| **Last Amended**: 2025-11-04
