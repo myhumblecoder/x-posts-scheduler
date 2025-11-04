@@ -6,6 +6,8 @@ const modulesToCheck = [
   path.join(__dirname, 'src', 'post_service.js'),
   path.join(__dirname, 'src', 'scheduler.js'),
   path.join(__dirname, 'src', 'oauth.js'),
+  path.join(__dirname, 'src', 'media_service.js'),
+  path.join(__dirname, 'src', 'history_service.js'),
 ];
 
 const testsDir = path.join(__dirname, 'tests');
@@ -18,6 +20,8 @@ for (const modPath of modulesToCheck) {
   const mod = require(modPath);
   const exports = Object.keys(mod);
   for (const name of exports) {
+    // Skip internal helpers prefixed with '_' (test helpers / debug exports)
+    if (name.startsWith('_')) continue;
     // Search for usage of name in test files (simple substring search)
     const used = testContents.some(c => c.includes(name));
     if (!used) {
