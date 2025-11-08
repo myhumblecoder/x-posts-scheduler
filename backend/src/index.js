@@ -53,4 +53,14 @@ app.get('/api/scheduled', (req, res) => {
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console
   console.log(`Backend running on http://localhost:${PORT}`);
+  // Optionally start background worker to process scheduled posts
+  if (process.env.ENABLE_WORKER === '1' || process.env.ENABLE_WORKER === 'true') {
+    try {
+      const worker = require('./worker');
+      worker.start();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to start worker:', String(err));
+    }
+  }
 });
