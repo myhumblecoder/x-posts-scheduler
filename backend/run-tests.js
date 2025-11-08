@@ -9,27 +9,32 @@ if (!fs.existsSync(testsDir)) {
 }
 
 const testFiles = fs.readdirSync(testsDir).filter(f => f.endsWith('.js'));
-let failures = 0;
 
-for (const file of testFiles) {
-  console.log('Running', file);
-  try {
-    const testModule = require(path.join(testsDir, file));
-    if (typeof testModule.run !== 'function') {
-      console.error(`Test file ${file} must export a 'run' function`);
+async function runAll() {
+  let failures = 0;
+  for (const file of testFiles) {
+    console.log('Running', file);
+    try {
+      const testModule = require(path.join(testsDir, file));
+      if (typeof testModule.run !== 'function') {
+        console.error(`Test file ${file} must export a 'run' function`);
+        failures++;
+        continue;
+      }
+      // Support async or sync run() functions
+      await Promise.resolve(testModule.run());
+      console.log('✔', file);
+    } catch (err) {
       failures++;
-      continue;
+      console.error('✖', file, '\n', err.stack || err);
     }
-    testModule.run();
-    console.log('✔', file);
-  } catch (err) {
-    failures++;
-    console.error('✖', file, '\n', err.stack || err);
   }
+
+  if (failures > 0) {
+    console.error(`${failures} test(s) failed`);
+    process.exit(1);
+  }
+  console.log('All tests passed');
 }
 
-if (failures > 0) {
-  console.error(`${failures} test(s) failed`);
-  process.exit(1);
-}
-console.log('All tests passed');
+runAll();

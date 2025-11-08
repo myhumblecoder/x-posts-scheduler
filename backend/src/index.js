@@ -16,6 +16,8 @@ app.get('/health', (req, res) => {
 // Create a draft and optionally schedule it
 app.post('/api/posts', (req, res) => {
   try {
+    // eslint-disable-next-line no-console
+    console.log('[server] POST /api/posts received', req.body && typeof req.body === 'object' ? { text: Boolean(req.body.text) } : typeof req.body);
     const { text, scheduledAt } = req.body || {};
     if (!text || typeof text !== 'string') {
       return res.status(400).json({ error: 'Missing or invalid `text` field' });
@@ -50,7 +52,64 @@ app.get('/api/scheduled', (req, res) => {
   res.json(scheduled);
 });
 
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`Backend running on http://localhost:${PORT}`);
+// Demo-only: trigger worker run once (useful when ENABLE_WORKER is not enabled)
+app.post('/api/run-now', (req, res) => {
+  try {
+    const worker = require('./worker');
+    // eslint-disable-next-line no-console
+    console.log('[server] POST /api/run-now invoked');
+    const stats = worker.runOnce();
+    // eslint-disable-next-line no-console
+    console.log('[server] runOnce stats', stats);
+    return res.json({ ok: true, processed: stats.processed, sent: stats.sent, failed: stats.failed });
+  } catch (err) {
+    return res.status(500).json({ error: String(err) });
+  }
 });
+
+let _server = null;
+let _worker = null;
+
+function startServer(port = PORT) {
+  if (_server) return _server;
+  _server = app.listen(port, () => {
+    // eslint-disable-next-line no-console
+    console.log(`Backend running on http://localhost:${port}`);
+  });
+
+  // Optionally start background worker to process scheduled posts
+  if (process.env.ENABLE_WORKER === '1' || process.env.ENABLE_WORKER === 'true') {
+    try {
+      _worker = require('./worker');
+      _worker.start();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to start worker:', String(err));
+    }
+  }
+  return _server;
+}
+
+function stopServer() {
+  if (_worker) {
+    try { _worker.stop(); } catch (e) { /* ignore */ }
+    _worker = null;
+  }
+  if (_server) {
+    _server.close();
+    _server = null;
+  }
+}
+
+// If run directly, start server immediately
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app, startServer, stopServer };
+
+function createServer() {
+  return app;
+}
+
+module.exports.createServer = createServer;
