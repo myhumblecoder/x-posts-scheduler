@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Tile from '../components/Tile'
 import { getScheduled, cancelPost, runNow, createPost, getLayout, saveLayout } from '../api'
 
@@ -11,6 +11,7 @@ export default function Canvas() {
   const [dragId, setDragId] = useState<string | null>(null)
   const [newText, setNewText] = useState('')
   const [newWhen, setNewWhen] = useState('')
+  const saveTimer = useRef<number | null>(null)
 
   async function refresh() {
     setLoading(true)
@@ -58,6 +59,7 @@ export default function Canvas() {
     e.preventDefault()
     if (!dragId) return
     if (dragId === overId) return
+    // Reorder items and schedule a debounced save of layout
     setItems((prev) => {
       const from = prev.findIndex((p) => p.id === dragId)
       const to = prev.findIndex((p) => p.id === overId)
@@ -65,6 +67,10 @@ export default function Canvas() {
       const copy = prev.slice()
       const [moved] = copy.splice(from, 1)
       copy.splice(to, 0, moved)
+
+      // schedule debounced save
+      scheduleSaveLayout(copy)
+
       return copy
     })
     setDragId(null)
@@ -91,6 +97,35 @@ export default function Canvas() {
       console.error('save layout failed', err)
     }
   }
+
+  function scheduleSaveLayout(currentItems: any[]) {
+    // clear any pending timer
+    if (saveTimer.current) {
+      window.clearTimeout(saveTimer.current)
+      saveTimer.current = null
+    }
+
+    // schedule save after 500ms
+    saveTimer.current = window.setTimeout(async () => {
+      const entries = currentItems.map((it, idx) => ({ id: it.id, order: idx }))
+      try {
+        await saveLayout(entries)
+        setLayout(entries)
+      } catch (err) {
+        console.error('auto save layout failed', err)
+      }
+      saveTimer.current = null
+    }, 500)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) {
+        window.clearTimeout(saveTimer.current)
+        saveTimer.current = null
+      }
+    }
+  }, [])
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault()

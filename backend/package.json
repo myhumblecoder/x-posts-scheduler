@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node src/index.js"
+    "dev": "node src/index.js",
+    "lint": "echo \"No backend lint configured\"",
+    "test": "node run-tests.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
