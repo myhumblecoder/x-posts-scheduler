@@ -29,24 +29,31 @@ function start(options = {}) {
 }
 
 function runOnce() {
+  const stats = { processed: 0, sent: 0, failed: 0 };
   try {
     const now = new Date();
     const due = scheduler.pickScheduled(now);
-    if (!due || due.length === 0) return;
+    if (!due || due.length === 0) return stats;
     // process each due post
     for (const id of due) {
+      stats.processed += 1;
       try {
         const result = scheduler.attemptPost(id, fakePoster);
         // eslint-disable-next-line no-console
         console.log('[worker] attemptPost', id, result);
+        if (result && result.ok) stats.sent += 1;
+        else stats.failed += 1;
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error('[worker] error posting', id, String(err));
+        stats.failed += 1;
       }
     }
+    return stats;
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('[worker] unexpected error', String(err));
+    return stats;
   }
 }
 
