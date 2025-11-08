@@ -50,6 +50,17 @@ app.get('/api/scheduled', (req, res) => {
   res.json(scheduled);
 });
 
+// Demo-only: trigger worker run once (useful when ENABLE_WORKER is not enabled)
+app.post('/api/run-now', (req, res) => {
+  try {
+    const worker = require('./worker');
+    worker.runOnce();
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(500).json({ error: String(err) });
+  }
+});
+
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console
   console.log(`Backend running on http://localhost:${PORT}`);
