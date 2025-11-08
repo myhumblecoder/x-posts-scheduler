@@ -16,6 +16,8 @@ app.get('/health', (req, res) => {
 // Create a draft and optionally schedule it
 app.post('/api/posts', (req, res) => {
   try {
+    // eslint-disable-next-line no-console
+    console.log('[server] POST /api/posts received', req.body && typeof req.body === 'object' ? { text: Boolean(req.body.text) } : typeof req.body);
     const { text, scheduledAt } = req.body || {};
     if (!text || typeof text !== 'string') {
       return res.status(400).json({ error: 'Missing or invalid `text` field' });
@@ -54,7 +56,11 @@ app.get('/api/scheduled', (req, res) => {
 app.post('/api/run-now', (req, res) => {
   try {
     const worker = require('./worker');
+    // eslint-disable-next-line no-console
+    console.log('[server] POST /api/run-now invoked');
     const stats = worker.runOnce();
+    // eslint-disable-next-line no-console
+    console.log('[server] runOnce stats', stats);
     return res.json({ ok: true, processed: stats.processed, sent: stats.sent, failed: stats.failed });
   } catch (err) {
     return res.status(500).json({ error: String(err) });

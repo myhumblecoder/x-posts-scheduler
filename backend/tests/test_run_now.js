@@ -1,75 +1,28 @@
-const assert = require('assert');
-const child = require('child_process');
+const request = require('supertest');
+const { createServer } = require('../src/index');
 
-// Run server in this process by starting/stopping via exported helpers.
 process.env.WORKER_DETERMINISTIC = '1';
-process.env.ENABLE_WORKER = '0'; // do not auto-start worker
+process.env.ENABLE_WORKER = '0'; // ensure worker does not auto-start
 
-const srv = require('../src/index.js');
+exports.run = async function() {
+  const app = createServer();
 
-function sleepSync(ms) {
-  const start = Date.now();
-  while (Date.now() - start < ms) {
-    // busy wait
-  }
-}
+  // 1. Create + schedule
+  const draftRes = await request(app)
+    .post('/api/posts')
+    .send({ text: 'supertest post', scheduledAt: new Date().toISOString() });
+  const post = draftRes.body;
+  if (!post.id) throw new Error('No post ID');
 
-function curlJson(cmd) {
-  try {
-    const out = child.execSync(cmd, { encoding: 'utf8' });
-    return JSON.parse(out);
-  } catch (err) {
-    throw new Error('curl failed: ' + String(err));
-  }
-}
+  // 2. Run now
+  const runRes = await request(app).post('/api/run-now');
+  const result = runRes.body;
+  if (result.processed !== 1) throw new Error('Wrong processed count');
+  if (result.sent !== 1) throw new Error('Wrong sent count');
 
-exports.run = function() {
-  // start the server explicitly
-  console.log('[test_run_now] starting server');
-  srv.startServer();
-  console.log('[test_run_now] server started');
-  // wait for server readiness (poll /health)
-  const start = Date.now();
-  let ok = false;
-  while (Date.now() - start < 5000) {
-    try {
-      const h = child.execSync('curl -s http://localhost:3000/health', { encoding: 'utf8' });
-      const parsed = JSON.parse(h);
-      if (parsed && parsed.status === 'ok') { ok = true; break; }
-    } catch (e) {
-      // ignore and retry
-    }
-    sleepSync(100);
-  }
-  if (!ok) throw new Error('server did not become ready');
+  // 3. Verify
+  const final = await request(app).get(`/api/posts/${post.id}`);
+  if (final.body.status !== 'SENT') throw new Error('Not SENT');
 
-  const scheduledAt = new Date(Date.now() - 2000).toISOString();
-  const payload = JSON.stringify({ text: 'integration run-now test', scheduledAt });
-
-  // create post via HTTP
-  console.log('[test_run_now] creating post');
-  const createCmd = `curl -s -X POST -H "Content-Type: application/json" -d '${payload}' http://localhost:3000/api/posts`;
-  const created = curlJson(createCmd);
-  console.log('[test_run_now] created', created && created.id);
-  assert(created && created.id, 'created post must have id');
-  assert(created.status === 'SCHEDULED', 'created post should be SCHEDULED');
-
-  // trigger worker run once via API
-  console.log('[test_run_now] triggering run-now');
-  const runCmd = `curl -s -X POST http://localhost:3000/api/run-now`;
-  const runRes = curlJson(runCmd);
-  console.log('[test_run_now] run-now response', runRes);
-  assert(runRes && runRes.ok === true, 'run-now should return ok');
-
-  // fetch the post
-  console.log('[test_run_now] fetching post');
-  const getCmd = `curl -s http://localhost:3000/api/posts/${created.id}`;
-  const fetched = curlJson(getCmd);
-  console.log('[test_run_now] fetched post status', fetched && fetched.status);
-  assert(fetched.status === 'SENT', 'post should be SENT after run-now');
-
-  // stop server to allow test runner to exit
-  console.log('[test_run_now] stopping server');
-  srv.stopServer();
-  console.log('[test_run_now] server stopped');
+  console.log('test_run_now: PASSED');
 };
