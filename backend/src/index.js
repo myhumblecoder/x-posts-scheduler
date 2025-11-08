@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const postService = require('./post_service');
+const layoutService = require('./layout_service');
 
 const app = express();
 app.use(cors());
@@ -51,6 +52,39 @@ app.get('/api/scheduled', (req, res) => {
   const scheduled = postService.listScheduled(now);
   res.json(scheduled);
 });
+
+// Cancel (mark failed) a scheduled post
+app.post('/api/posts/:id/cancel', (req, res) => {
+  try {
+    const id = req.params.id
+    const post = postService.getPost(id)
+    if (!post) return res.status(404).json({ error: 'Not found' })
+    postService.markFailed(id, 'CANCELLED', 'Cancelled by user')
+    return res.json(postService.getPost(id))
+  } catch (err) {
+    return res.status(500).json({ error: String(err) })
+  }
+})
+
+// Layout endpoints: get and save layout for the canvas
+app.get('/api/layout', (req, res) => {
+  try {
+    const layout = layoutService.getLayout()
+    return res.json(layout)
+  } catch (err) {
+    return res.status(500).json({ error: String(err) })
+  }
+})
+
+app.post('/api/layout', (req, res) => {
+  try {
+    const entries = req.body
+    const saved = layoutService.saveLayout(entries)
+    return res.json(saved)
+  } catch (err) {
+    return res.status(400).json({ error: String(err) })
+  }
+})
 
 // Demo-only: trigger worker run once (useful when ENABLE_WORKER is not enabled)
 app.post('/api/run-now', (req, res) => {

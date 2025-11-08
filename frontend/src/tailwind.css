@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* small project-specific helpers */
+.app-root { @apply max-w-4xl mx-auto mt-8 p-6; }
+.card { @apply bg-white rounded-lg shadow p-4; }
+.btn { @apply inline-flex items-center px-3 py-1.5 bg-teal-500 text-white rounded-md; }
