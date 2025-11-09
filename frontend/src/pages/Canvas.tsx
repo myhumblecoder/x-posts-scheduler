@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Tile from '../components/Tile'
+import ConfirmModal from '../components/ConfirmModal'
+import { useToaster } from '../components/Toaster'
 import { getScheduled, cancelPost, runNow, createPost, getLayout, saveLayout } from '../api'
 
 type Item = { id: string; content_text?: string; scheduled_at?: string | null }
@@ -9,9 +11,11 @@ export default function Canvas() {
   const [loading, setLoading] = useState(false)
   const [layout, setLayout] = useState<Record<string, any>[]>([])
   const [dragId, setDragId] = useState<string | null>(null)
+  const [confirmId, setConfirmId] = useState<string | null>(null)
   const [newText, setNewText] = useState('')
   const [newWhen, setNewWhen] = useState('')
   const saveTimer = useRef<number | null>(null)
+  const { toast } = useToaster()
 
   async function refresh() {
     setLoading(true)
@@ -41,13 +45,34 @@ export default function Canvas() {
 
   useEffect(() => { refresh() }, [])
 
-  async function onRemove(id: string) {
+  async function onRemoveConfirmed(id: string) {
+    // Optimistic UI: remove locally immediately for snappy UX
+    setItems((prev) => prev.filter((p) => p.id !== id))
     try {
       await cancelPost(id)
+      try { toast('Scheduled post removed', 'success') } catch (e) {}
     } catch (err) {
       console.error('cancel failed', err)
+      try { toast('Failed to cancel post', 'error') } catch (e) {}
+      // restore by refreshing from server if cancel failed
+      await refresh()
+      return
     }
-    await refresh()
+    // Also remove any saved layout entry for this id
+    try {
+      const remaining = items.filter((it) => it.id !== id)
+      const entries = remaining.map((it, idx) => ({ id: it.id, order: idx }))
+      await saveLayout(entries)
+      setLayout(entries)
+    } catch (err) {
+      // non-fatal
+      console.error('failed to update layout after remove', err)
+      try { toast('Failed to update layout', 'error') } catch (e) {}
+    }
+  }
+
+  function onRemove(id: string) {
+    setConfirmId(id)
   }
 
   function onDragStart(e: React.DragEvent, id: string) {
@@ -82,8 +107,10 @@ export default function Canvas() {
     try {
       await runNow()
       await refresh()
+      try { toast('Run requested', 'success') } catch (e) {}
     } catch (err) {
       console.error('run-now failed', err)
+      try { toast('Run failed', 'error') } catch (e) {}
     }
   }
 
@@ -93,8 +120,10 @@ export default function Canvas() {
     try {
       await saveLayout(entries)
       setLayout(entries)
+      try { toast('Layout saved', 'success') } catch (e) {}
     } catch (err) {
       console.error('save layout failed', err)
+      try { toast('Failed to save layout', 'error') } catch (e) {}
     }
   }
 
@@ -113,6 +142,7 @@ export default function Canvas() {
         setLayout(entries)
       } catch (err) {
         console.error('auto save layout failed', err)
+        try { toast('Auto-save layout failed', 'error') } catch (e) {}
       }
       saveTimer.current = null
     }, 500)
@@ -134,8 +164,10 @@ export default function Canvas() {
       setNewText('')
       setNewWhen('')
       await refresh()
+      try { toast('Post created', 'success') } catch (e) {}
     } catch (err) {
       console.error('create failed', err)
+      try { toast('Failed to create post', 'error') } catch (e) {}
     }
   }
 
@@ -179,6 +211,18 @@ export default function Canvas() {
             </div>
           ))}
         </div>
+      )}
+      {/* Confirmation modal */}
+      {confirmId && (
+        <ConfirmModal
+          open={!!confirmId}
+          title="Remove scheduled post"
+          message="This will cancel the scheduled post. Are you sure?"
+          confirmLabel="Remove"
+          cancelLabel="Keep"
+          onConfirm={async () => { const id = confirmId!; setConfirmId(null); await onRemoveConfirmed(id) }}
+          onCancel={() => setConfirmId(null)}
+        />
       )}
     </section>
   )

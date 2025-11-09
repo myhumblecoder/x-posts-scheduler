@@ -136,3 +136,46 @@ This is suitable for demos and local persistence without installing native depen
 The server will still support the SQLite path if you explicitly enable `USE_SQLITE=1` and have `better-sqlite3` installed.
 
 If you want, I can add a small smoke-test that starts the server with `USE_SQLITE=1`, runs the migration, and verifies persistence — would you like that next?
+
+## LLM endpoints and provider configuration
+
+The backend includes a small LLM abstraction and two HTTP endpoints for generation and provider health checks. The default provider is `ollama` when `LLM_PROVIDER` is not set. You can configure providers with the following environment variables:
+
+- `LLM_PROVIDER` — one of `stub`, `ollama`, or `openai`. Default: `ollama`.
+- `OLLAMA_URL` — base URL for a local Ollama instance (default `http://localhost:11434`).
+- `OLLAMA_MODEL` — model name to pass to Ollama (defaults to `llama`).
+- `OPENAI_API_KEY` — API key for OpenAI if using `openai` provider.
+
+Endpoints:
+
+- POST `/api/generate` — generate text. Body JSON: `{ "prompt": "...", "model": "optional", "provider": "optional", "timeout": 30000 }`. Returns `{ "text": "generated text" }`.
+
+- GET `/api/llm/status` — quick provider health check. Query params: `?provider=ollama|openai|stub` (optional), `?timeout=ms` (optional). Example responses:
+  - healthy: `{ "ok": true, "provider": "ollama" }`
+  - unhealthy: `502 { "ok": false, "provider": "ollama", "error": "..." }`
+
+Notes:
+
+- The Ollama provider uses `/api/generate` on the configured `OLLAMA_URL` and defaults to a 30s per-request timeout for normal generation. The status endpoint uses a short probe timeout (default 5s for Ollama) to keep checks fast.
+- If your Ollama instance runs a specific model such as `llama3.1:8b`, set `OLLAMA_MODEL` to that exact model identifier so the backend targets it directly. Example:
+
+```zsh
+# use the llama3.1:8b model on your local Ollama
+export OLLAMA_MODEL="llama3.1:8b"
+LLM_PROVIDER=ollama npm --prefix backend start
+```
+
+The fallback discovery will also try to detect available models and prefer `llama3`/`llama` variants if present.
+
+- The `stub` provider is deterministic and useful for tests and local development — it returns an "enhanced" string without network calls.
+- For OpenAI, the default call is to the Chat Completions endpoint and uses the `OPENAI_API_KEY` environment variable.
+
+Example `curl` calls:
+
+```zsh
+# Generate using stub provider (no API keys)
+curl -s -X POST http://localhost:3000/api/generate -H 'Content-Type: application/json' -d '{"prompt":"Write a short headline","provider":"stub"}' | jq
+
+# Health check for configured provider (defaults to ollama)
+curl -s http://localhost:3000/api/llm/status | jq
+```

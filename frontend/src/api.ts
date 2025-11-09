@@ -1,4 +1,4 @@
-type CreatePostPayload = { text: string; scheduledAt?: string | null }
+type CreatePostPayload = { text: string; scheduledAt?: string | null; enhance?: boolean }
 
 export async function createPost(payload: CreatePostPayload) {
   const res = await fetch('/api/posts', {
