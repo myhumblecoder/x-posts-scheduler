@@ -52,6 +52,28 @@ Specify your license here (e.g., MIT) or add a `LICENSE` file.
 
 ## One-click deploy & live demo
 
+## Backend persistence (SQLite)
+
+The backend supports an optional SQLite-backed persistence mode for demos and local persistence. Full instructions and examples are in `backend/README.md`.
+
+Quick example commands:
+
+```zsh
+# Seed the demo DB using the included example seed
+USE_SQLITE=1 node backend/scripts/migrate_to_sqlite.js --seed=backend/scripts/seed.example.json
+
+# Start the backend with SQLite persistence
+USE_SQLITE=1 node backend/src/index.js
+
+# Export the DB to JSON
+USE_SQLITE=1 node backend/scripts/migrate_to_sqlite.js --export=backend/scripts/export.json
+```
+
+Notes:
+
+- By default the DB file is created at `data/app.db`. Override with `SQLITE_DB_PATH`.
+- Tests and CI use the in-memory stores by default; do not enable `USE_SQLITE` in CI unless you isolate DB files per job.
+
 ## Badges
 
 - Vercel: [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new)
